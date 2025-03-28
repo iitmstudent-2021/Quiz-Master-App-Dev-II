@@ -47,9 +47,7 @@ export default {
               placeholder="30"
             />
           </div>
-          <p class="text-danger">
-            Note: you may include more input fields as needed...
-          </p>
+         
           <!-- Save/Cancel -->
           <div class="text-end mt-4">
             <button class="btn btn-primary me-2" @click="createQuiz">

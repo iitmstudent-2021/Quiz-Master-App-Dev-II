@@ -12,8 +12,8 @@ from collections import defaultdict
 import traceback  # Import traceback for better debugging
 from .models import db, User, Role, User_Info, Quiz, Score, Question, Subject, Chapter
 from celery.result import AsyncResult
-# from .tasks import csv_report, monthly_report
-from application.tasks import export_quiz_attempts, monthly_report, daily_quiz_reminder 
+from .tasks import export_quiz_attempts, monthly_report, daily_quiz_reminder, export_all_user_performance, quiz_status_update
+# from application.tasks import export_quiz_attempts, monthly_report, daily_quiz_reminder, quiz_report
 from celery.result import AsyncResult
 import os
 from flask import send_from_directory
@@ -232,7 +232,7 @@ def user_summary():
 
 @app.route('/api/export_quiz_attempts', methods=['GET'])
 @auth_required('token')
-@roles_accepted('admin')  # ✅ Fix: Allow both Admin and User
+@roles_accepted('admin')  # Fix: Allow both Admin and User
 def export_quiz_attempts_route():
     """
     Manually triggers the Celery task to export the current user's quiz attempts.
@@ -244,8 +244,6 @@ def export_quiz_attempts_route():
     }), 202
 
 @app.route('/api/csv_result/<task_id>', methods=['GET'])
-@auth_required('token')  # Ensure authentication
-@roles_accepted('user')  # Allow both roles
 def csv_result(task_id):
     """
     Check CSV export task status and return the file if completed.
@@ -259,11 +257,11 @@ def csv_result(task_id):
     elif res.result:
         file_path = f"static/{res.result}"
 
-        # ✅ Ensure the file exists before sending
+        # Ensure the file exists before sending
         if not os.path.exists(file_path):
             return jsonify({"status": "Failed", "message": "File not found."}), 404
 
-        return send_from_directory('static', res.result, as_attachment=True)  # ✅ Uses just the filename
+        return send_from_directory('static', res.result, as_attachment=True)  # Uses just the filename
 
     return jsonify({"status": "Processing", "message": "Your CSV is still being generated."}), 202
 
@@ -293,3 +291,33 @@ def trigger_monthly_report():
         "message": "Monthly reports are being generated and sent.",
         "task_id": result.id
     }), 202
+
+@app.route("/api/export_all_user_performance", methods=["GET"])
+def export_all_user_performance_route():
+    result = export_all_user_performance.delay()
+    return jsonify({
+        "message": "Performance report is being generated.",
+        "task_id": result.id
+    }), 202
+
+
+@app.route('/api/quizzes', methods=['POST'])
+@auth_required('token')
+@roles_required('admin')
+def create_quiz():
+    data = request.get_json()
+    new_quiz = Quiz(
+        name=data['name'],
+        chapter_id=data['chapter_id'],
+        quiz_date=data['quiz_date'],
+        duration_time=data['duration_time']
+    )
+    db.session.add(new_quiz)
+    db.session.commit()
+
+    # 🔔 Send notifications via Google Chat
+    users = User_Info.query.all()
+    for user in users:
+        quiz_status_update.delay(user.full_name, update_type="new_quiz")
+
+    return jsonify({"message": "Quiz created and users notified!"}), 201

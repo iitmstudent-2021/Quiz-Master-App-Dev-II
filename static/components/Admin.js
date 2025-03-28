@@ -4,17 +4,17 @@ export default {
       <!-- Dashboard Heading -->
       <h2 class="mb-4 text-center">Admin Dashboard</h2>
 
-      <!-- CSV Download Button -->
+      <!-- Performance Export Button -->
       <div class="text-end mb-3">
         <button 
-          class="btn btn-secondary" 
-          @click="exportQuizAttempts"
+          class="btn btn-success" 
+          @click="exportAllPerformance"
           :disabled="isExporting"
         >
-          {{ isExporting ? "Processing..." : "Download CSV" }}
+          {{ isExporting ? "Processing..." : "Export All Performance" }}
         </button>
       </div>
-    
+
       <!-- Subject Cards Row -->
       <div class="d-flex flex-wrap justify-content-start">
         <div
@@ -106,10 +106,7 @@ export default {
     },
 
     deleteSubject(subjectId) {
-      if (!confirm("Are you sure you want to delete this subject?")) {
-        return;
-      }
-
+      if (!confirm("Are you sure you want to delete this subject?")) return;
       fetch(`/api/subjects/${subjectId}`, {
         method: "DELETE",
         headers: {
@@ -118,33 +115,20 @@ export default {
         }
       })
         .then((res) => res.json())
-        .then(() => {
-          alert("Subject deleted successfully!");
-          this.loadSubjects();
-        })
+        .then(() => this.loadSubjects())
         .catch((err) => console.error("Error deleting subject:", err));
     },
 
     addChapter(subjectId) {
-      this.$router.push({
-        name: "chapter-form",
-        params: { subjectId: subjectId }
-      });
+      this.$router.push({ name: "chapter-form", params: { subjectId } });
     },
 
     editChapter(chapter) {
-      this.$router.push({
-        name: "chapter-form",
-        params: {
-          subjectId: chapter.subject_id,
-          chapterId: chapter.id
-        }
-      });
+      this.$router.push({ name: "chapter-form", params: { subjectId: chapter.subject_id, chapterId: chapter.id } });
     },
 
     deleteChapter(chapterId) {
       if (!confirm("Are you sure you want to delete this chapter?")) return;
-
       fetch(`/api/chapters/${chapterId}`, {
         method: "DELETE",
         headers: {
@@ -153,85 +137,70 @@ export default {
         }
       })
         .then((res) => res.json())
-        .then(() => {
-          this.loadSubjects();
-        })
+        .then(() => this.loadSubjects())
         .catch((err) => console.error("Error deleting chapter:", err));
     },
 
-    // ✅ **Trigger CSV Export**
-    exportQuizAttempts() {
+    exportAllPerformance() {
       this.isExporting = true;
-      const authToken = localStorage.getItem("auth_token");
-
-      fetch("/api/export_quiz_attempts", {
-        method: "GET",
-        headers: { "Authentication-Token": authToken },
+      fetch("/api/export_all_user_performance", {
+        headers: {
+          "Authentication-Token": localStorage.getItem("auth_token")
+        }
       })
-        .then(res => {
-          if (res.status === 403) {
-            alert("You are not authorized to export quiz attempts.");
-            throw new Error("403 Forbidden - Unauthorized");
-          }
-          return res.json();
-        })
+        .then(res => res.json())
         .then(data => {
           if (data.task_id) {
             this.taskId = data.task_id;
             this.checkCsvStatus();
           } else {
-            alert("Error starting CSV export.");
+            alert("Error starting performance export.");
             this.isExporting = false;
           }
         })
         .catch(err => {
-          console.error("Error exporting quiz attempts:", err);
+          console.error("Error exporting performance report:", err);
           this.isExporting = false;
         });
     },
 
-    // ✅ **Check CSV Status and Download**
     checkCsvStatus() {
       if (!this.taskId) return;
-  
       const interval = setInterval(() => {
-          fetch(`/api/csv_result/${this.taskId}`, {
-              headers: {
-                  "Authentication-Token": localStorage.getItem("auth_token"),
-              }
-          })
+        fetch(`/api/csv_result/${this.taskId}`, {
+          headers: { "Authentication-Token": localStorage.getItem("auth_token") }
+        })
           .then(res => {
-              if (res.status === 202) {
-                  console.log("CSV is still being processed...");
-                  return res.json();
-              } else if (res.status === 404) {
-                  console.warn("No quiz attempts found.");
-                  clearInterval(interval);
-                  this.isExporting = false;
-                  return null;  // ✅ Avoid showing an alert
-              } else if (res.ok) {
-                  clearInterval(interval);
-                  return res.blob();
-              } else {
-                  throw new Error("Failed to fetch CSV");
-              }
+            if (res.status === 202) return res.json();
+            if (res.status === 404) {
+              clearInterval(interval);
+              this.isExporting = false;
+              return null;
+            }
+            if (res.ok) {
+              clearInterval(interval);
+              return res.blob();
+            }
+            throw new Error("Failed to fetch CSV");
           })
           .then(blob => {
-              if (blob && blob instanceof Blob) {
-                  const url = window.URL.createObjectURL(blob);
-                  const a = document.createElement("a");
-                  a.href = url;
-                  a.download = "quiz_attempts.csv";
-                  document.body.appendChild(a);
-                  a.click();
-                  window.URL.revokeObjectURL(url);
-                  this.isExporting = false;
-              }
+            if (blob && blob instanceof Blob) {
+              const url = window.URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = "quiz_report.csv";
+              document.body.appendChild(a);
+              a.click();
+              window.URL.revokeObjectURL(url);
+              this.isExporting = false;
+            }
           })
-          .catch(err => console.error("Error checking CSV status:", err));
+          .catch(err => {
+            console.error("Error checking CSV status:", err);
+            clearInterval(interval);
+            this.isExporting = false;
+          });
       }, 3000);
-  }
-  
-  
+    }
   }
 };

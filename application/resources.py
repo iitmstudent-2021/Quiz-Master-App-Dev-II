@@ -5,6 +5,8 @@ from datetime import datetime, timedelta
 from .models import db, Subject, Chapter, Quiz, Question, Score, User_Info
 import math
 from .utils import roles_list
+from application.cache_config import cache
+
 
 api = Api()
 

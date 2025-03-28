@@ -3,10 +3,10 @@ export default {
   template: `
     <div class="border p-2 d-flex justify-content-between align-items-center" style="background-color: #e7f1ff;">
       <div class="d-flex align-items-center">
-        <router-link class="text-decoration-none fs-4 fw-bold me-4" style="color: #2c3e50;" to="/">Quiz Master</router-link>
-        <router-link class="text-decoration-none me-3" style="color: green;" to="/admin">Dashboard</router-link>
-        <router-link class="text-decoration-none me-3" style="color: green;" to="/quiz">Quiz</router-link>
-        <router-link class="text-decoration-none me-3" style="color: green;" to="/summary-admin">Summary</router-link>
+        <router-link class="nav-link text-decoration-none fs-4 fw-bold me-4" style="color: #2c3e50;" to="/">Quiz Master</router-link>
+        <router-link class="nav-link text-decoration-none me-3" style="color: green;" to="/admin">Dashboard</router-link>
+        <router-link class="nav-link text-decoration-none me-3" style="color: green;" to="/quiz">Quiz</router-link>
+        <router-link class="nav-link text-decoration-none me-3" style="color: green;" to="/summary-admin">Summary</router-link>
 
         <!-- Search Bar -->
         <input type="text" class="form-control me-2" v-model="searchQuery" placeholder="Search users, subjects, quizzes" @keyup.enter="performSearch">

@@ -42,10 +42,7 @@ export default {
               />
             </div>
   
-            <p class="text-danger">
-              Note: you may include more input fields as needed...
-            </p>
-  
+             
             <!-- Buttons: Create/Edit, Delete (only if edit), Cancel -->
             <div class="text-end mt-4">
               <!-- If new chapter, show "Create"; if editing, show "Update" -->

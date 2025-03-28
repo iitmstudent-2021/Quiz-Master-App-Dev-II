@@ -30,10 +30,7 @@ export default {
             ></textarea>
           </div>
   
-          <p class="text-danger">
-            Note: you may include more input fields as needed...
-          </p>
-  
+            
           <!-- Save/Cancel Buttons -->
           <div class="text-end mt-4">
             <button class="btn btn-primary me-2" @click="createSubject">
