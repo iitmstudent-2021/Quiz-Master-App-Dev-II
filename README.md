@@ -573,7 +573,9 @@ The application demo video showcases:
 - Performance analytics
 - Email and notification systems
 
-**Video Link**: [To be provided in project submission]
+**🎬 Video Demo**: [Quiz Master V2 - Live Demonstration](https://drive.google.com/file/d/1VMafWwAhRk0MKcuWjIRsGwJRYDSJW2MP/view?usp=sharing)
+
+*Note: The video demonstrates all core functionalities including admin dashboard, quiz creation, user quiz attempts, background task processing, and performance analytics.*
 
 ## 📝 Future Enhancements
 
